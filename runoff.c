@@ -61,6 +61,66 @@ int main(int argc, string argv[])
         printf("Maximum number of voters is %i\n", MAX_VOTERS);
         return 3;
     }
+
+    // Keep querying for votes
+    for (int i = 0; i < voter_count; i++)
+    {
+
+        // Query for each rank
+        for (int j = 0; j < candidate_count; j++)
+        {
+            string name = get_string("Rank %i: ", j + 1);
+
+            // Record vote, unless it's invalid
+            if (!vote(i, j, name))
+            {
+                printf("Invalid vote.\n");
+                return 4;
+            }
+        }
+
+        printf("\n");
+    }
+
+    // Keep holding runoffs until winner exists
+    while (true)
+    {
+        // Calculate votes given remaining candidates
+        tabulate();
+
+        // Check if election has been won
+        bool won = print_winner();
+        if (won)
+        {
+            break;
+        }
+
+        // Eliminate last-place candidates
+        int min = find_min();
+        bool tie = is_tie(min);
+
+        // If tie, everyone wins
+        if (tie)
+        {
+            for (int i = 0; i < candidate_count; i++)
+            {
+                if (!candidates[i].eliminated)
+                {
+                    printf("%s\n", candidates[i].name);
+                }
+            }
+            break;
+        }
+
+        // Eliminate anyone with minimum number of votes
+        eliminate(min);
+
+        // Reset vote counts back to zero
+        for (int i = 0; i < candidate_count; i++)
+        {
+            candidates[i].votes = 0;
+        }
+    }
     return 0;
 }
 
@@ -118,6 +178,14 @@ bool print_winner(void)
 int find_min(void)
 {
     // TODO
+    int min_votes = MAX_VOTERS;
+    for (int i = 0; i < candidate_count; i++)
+    {
+        if (!candidates[i].eliminated && candidates[i].votes < min_votes)
+        {
+            min_votes = candidates[i].votes;
+        }
+    }
     return min_votes;
 }
 
@@ -125,6 +193,13 @@ int find_min(void)
 bool is_tie(int min)
 {
     // TODO
+    for (int i = 0; i < candidate_count; i++)
+    {
+        if (!candidates[i].eliminated && candidates[i].votes != min)
+        {
+            return false;
+        }
+    }
     return true;
 }
 
@@ -132,4 +207,11 @@ bool is_tie(int min)
 void eliminate(int min)
 {
     // TODO
+    for (int i = 0; i < candidate_count; i++)
+    {
+        if (candidates[i].votes == min)
+        {
+            candidates[i].eliminated = true;
+        }
+    }
 }
